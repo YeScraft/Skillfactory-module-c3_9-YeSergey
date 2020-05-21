@@ -2,23 +2,26 @@ text = document.querySelector("#city");
 // При изменении поля ввода в городе вызывается функций сохранения названия города в cookies
 text.addEventListener('input', setSity);
 
+checked = {};
 let frm = document.forms[0];
+let fieldset = frm.elements.checkboxes;
+
 // При обновлении страницы, если в сookies сохранён город его значение будет выведено на экран
 if (getCookie(text.id) != undefined){
     out.textContent = "Ваш город: " + getCookie(text.id);
     inputCity.hidden = true;
     showCity.hidden = false;
 }
-// Проверка по индикатору сохранены ли checkboxes и возврат из cookies значения с блокировкой формы
+// Проверка по индикатору сохранены ли checkboxes и возврат из cookies значения с блокировкой поля fieldset у формы
 if (getCookie("save") != undefined){
     save.hidden = true;
     ResetCheckbox.hidden = false;
-    for (i=0; i<6; ++i){
-        if (getCookie(String(i)) != undefined){
-            frm[i].checked = document.cookie[i];
-        }
-        frm[i].disabled = true;
+    checkedbox = getCookie("box");
+    checkedbox = JSON.parse(checkedbox);
+    for (let key in checkedbox){
+        fieldset.elements[key].checked = checkedbox[key];
     }
+    fieldset.disabled = true;
 }
 // Проверка введён ли город по нажатию на кнопку Enter и вывод на экран значение введённого города
 setS.onclick = () => {
@@ -44,26 +47,28 @@ function setSity(e){
     setCookie(name, value);
 }
 // Благодаря всплытию событий определяем элемент формы, который был изменён (галочки) и сохраняем
-// его значение в cookies
+// его значение в cookies ввиде json строки, чтобы не занимать лишние слоты в coockies
 frm.onchange = (e) => {
-    console.log(e.target.id, e.target.checked);
-    value = e.target.checked;
-    name = e.target.id;
-    setCookie(name, value);
+    name = "box";
+    checked[e.target.id] = e.target.checked;
+    setCookie(name, JSON.stringify(checked));
 }
 // Создаём индикатор, что состояние галочек сохранено.
 save.onclick = () =>{
-    name = "save";
-    value = 1;
-    setCookie(name, value);
+    if (getCookie("box") == undefined) {
+        return null;
+    } 
+    else {
+        name = "save";
+        value = 1;
+        setCookie(name, value);
+    }  
 }
 // Обнуляет Checkbox
 ResetCheckbox.onclick = () =>{
     deleteCookie("save");
-    for (let i=0; i<6; ++i){
-        deleteCookie(i);
-        frm[i].disabled = false; // перебирает элементы формы
-    }
+    deleteCookie("box");
+    fieldset.disabled = false;
     save.hidden = false;
     ResetCheckbox.hidden = true;
 }
